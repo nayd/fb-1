@@ -118,4 +118,48 @@ public class LruCacheTests
         evictedKey.Should().Be(1);
         evictedValue.Should().Be("One");
     }
+    
+    [Test]
+    public void Cache_Should_Be_Thread_Safe()
+    {
+        // Arrange
+        const int numThreads = 10;
+        const int numOperationsPerThread = 1000;
+        const int maxCacheItems = numThreads * numOperationsPerThread / 2;
+        var cache = new LruCache<string, int>(maxCacheItems);
+
+        var threads = new List<Thread>();
+
+        // Act
+        for (int i = 0; i < numThreads; i++)
+        {
+            var thread = new Thread(() =>
+            {
+                for (int j = 0; j < numOperationsPerThread; j++)
+                {
+                    var key = Thread.CurrentThread.ManagedThreadId + "-" + j;
+                    cache.Add(key, j);
+                    var value = cache.Get(key);
+                    
+                    // Assert
+                    j.Should().Be(value);
+                }
+            });
+
+            threads.Add(thread);
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Start();
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
+
+        // Assert
+        maxCacheItems.Should().Be(cache.Count);
+    }
 }
