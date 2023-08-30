@@ -16,8 +16,20 @@ static class Program
             .BuildServiceProvider();
 
         var cache = serviceProvider.GetRequiredService<ICache<string, object>>();
+        
+        cache.ItemEvicted += (sender, eventArgs) =>
+        {
+            Console.WriteLine($"Item with key '{eventArgs.EvictedKey}' and value '{eventArgs.EvictedValue}' was evicted.");
+        };
+        
         cache.Add("key1", "value1");
-        var value = cache.Get("key1");
+        cache.Add("key2", "value2");
+        cache.Add("key3", "value3");
+        
+        // after adding key4 we should get the event notification
+        cache.Add("key4", "value4");
+        
+        var value = cache.Get("key4");
 
         Console.WriteLine(value);
 

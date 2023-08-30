@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class LruCache<TKey, TValue> : ICache<TKey, TValue> where TKey : notnull
 {
+    public event EventHandler<CacheEvictionEventArgs<TKey, TValue>> ItemEvicted;
+
     private readonly int _maxCacheItems;
     private readonly Dictionary<TKey, LinkedListNode<CacheItem>> _cacheMap;
     private readonly LinkedList<CacheItem> _cacheList;
@@ -50,9 +52,19 @@ public class LruCache<TKey, TValue> : ICache<TKey, TValue> where TKey : notnull
 
     private void Evict()
     {
-        var lastNode = _cacheList.Last;
-        _cacheList.RemoveLast();
-        if (lastNode != null) _cacheMap.Remove(lastNode.Value.Key);
+        if (_cacheList.Last != null)
+        {
+            var lastNode = _cacheList.Last;
+            _cacheList.RemoveLast();
+
+            if (lastNode != null)
+            {
+                var evictedKey = lastNode.Value.Key;
+                _cacheMap.Remove(evictedKey);
+
+                ItemEvicted?.Invoke(this, new CacheEvictionEventArgs<TKey, TValue>(evictedKey, lastNode.Value.Value));    
+            }
+        }
     }
 
     private class CacheItem
