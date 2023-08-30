@@ -33,10 +33,10 @@ public class LruCacheTests
         cache.Add(2, "Two");
         cache.Add(3, "Three");
         cache.Add(4, "Four"); // This should trigger eviction of "One"
+        var act = () => cache.Get(1);
 
         // Assert
-        Action getEvictedItem = () => cache.Get(1);
-        getEvictedItem.Should().Throw<KeyNotFoundException>();
+        act.Should().Throw<KeyNotFoundException>();
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class LruCacheTests
         var cache = new LruCache<int, string>(3);
 
         // Act
-        Action act = () => cache.Get(1);
+        var act = () => cache.Get(1);
 
         // Assert
         act.Should().Throw<KeyNotFoundException>().WithMessage("Key '1' not found in cache.");
@@ -83,7 +83,7 @@ public class LruCacheTests
         cache.Add(4, "Four"); // This should trigger eviction of key2
 
         // Act
-        Action act = () => cache.Get(2);
+        var act = () => cache.Get(2);
         
         // Assert
         act.Should().Throw<KeyNotFoundException>().WithMessage("Key '2' not found in cache.");
@@ -161,5 +161,18 @@ public class LruCacheTests
 
         // Assert
         maxCacheItems.Should().Be(cache.Count);
+    }
+    
+    [Test]
+    public void Cache_When_MaxCacheItemsIsLessThanZero_Should_ThrowKeyNotFoundException()
+    {
+        // Arrange
+        LruCache<int, string> cache = null;
+        
+        // Act
+        var act = () => cache = new LruCache<int, string>(-1);
+
+        // Assert
+        act.Should().Throw<ArgumentException>().WithMessage("Max cache items should be greater than zero. (Parameter 'maxCacheItems')");
     }
 }

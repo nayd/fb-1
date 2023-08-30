@@ -29,6 +29,11 @@ public class LruCache<TKey, TValue> : ICache<TKey, TValue> where TKey : notnull
     
     public LruCache(int maxCacheItems)
     {
+        if (maxCacheItems <= 0)
+        {
+            throw new ArgumentException("Max cache items should be greater than zero.", nameof(maxCacheItems));
+        }
+
         _maxCacheItems = maxCacheItems;
         _cacheMap = new Dictionary<TKey, LinkedListNode<CacheItem>>();
         _cacheList = new LinkedList<CacheItem>();
@@ -81,13 +86,10 @@ public class LruCache<TKey, TValue> : ICache<TKey, TValue> where TKey : notnull
             var lastNode = _cacheList.Last;
             _cacheList.RemoveLast();
 
-            if (lastNode != null)
-            {
-                var evictedKey = lastNode.Value.Key;
-                _cacheMap.Remove(evictedKey);
+            var evictedKey = lastNode.Value.Key;
+            _cacheMap.Remove(evictedKey);
 
-                ItemEvicted?.Invoke(this, new CacheEvictionEventArgs<TKey, TValue>(evictedKey, lastNode.Value.Value));    
-            }
+            ItemEvicted?.Invoke(this, new CacheEvictionEventArgs<TKey, TValue>(evictedKey, lastNode.Value.Value));
         }
     }
 
